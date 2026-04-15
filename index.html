@@ -165,7 +165,7 @@ window.logout = async () => {
 };
 
 //
-// ➕ ADD
+// ➕ ADD (ANTI-DOUBLON)
 //
 window.addData = async () => {
   try {
@@ -179,12 +179,30 @@ window.addData = async () => {
       return;
     }
 
+    // 🔍 check doublon
+    const q = query(collection(db, "users", user.uid, "index"));
+    const snap = await getDocs(q);
+
+    let exists = false;
+
+    snap.forEach(d => {
+      if (d.data().code === codeValue) {
+        exists = true;
+      }
+    });
+
+    if (exists) {
+      alert("❌ Ce code existe déjà !");
+      return;
+    }
+
     await addDoc(collection(db, "users", user.uid, "index"), {
       name: nameValue,
       code: codeValue,
       createdAt: Date.now()
     });
 
+    alert("Ajout réussi !");
     loadAll();
 
   } catch (e) {
@@ -228,7 +246,7 @@ window.searchData = async () => {
 };
 
 //
-// 📋 LOAD ALL + SORT + COUNTER
+// 📋 LOAD ALL + SORT + COUNT
 //
 window.loadAll = async () => {
   const user = auth.currentUser;
