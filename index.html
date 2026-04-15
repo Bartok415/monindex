@@ -33,16 +33,32 @@
 
 <hr>
 
-<p id="result"></p>
+<!-- RECHERCHE -->
+<div class="box">
+  <h2>🔍 Recherche</h2>
+  <input id="search" placeholder="Nom"><br><br>
+  <button onclick="searchData()">Rechercher</button>
+  <p id="result"></p>
+</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
-from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
-import { getFirestore, collection, addDoc } 
-from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword 
+} from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  getDocs 
+} from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCjof3pUtMA9FdipAhENV8kMO_5_BVA8wQ",
@@ -57,7 +73,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🔐 CREATE ACCOUNT
+//
+// 🔐 SIGNUP
+//
 window.signup = async () => {
   try {
     await createUserWithEmailAndPassword(auth, email.value, password.value);
@@ -67,7 +85,9 @@ window.signup = async () => {
   }
 };
 
+//
 // 🔑 LOGIN
+//
 window.login = async () => {
   try {
     await signInWithEmailAndPassword(auth, email.value, password.value);
@@ -77,29 +97,64 @@ window.login = async () => {
   }
 };
 
-// ➕ ADD DATA (FIX FINAL)
+//
+// ➕ ADD DATA
+//
 window.addData = async () => {
   try {
-    const nameInput = document.getElementById("name");
-    const codeInput = document.getElementById("code");
+    const nameValue = document.getElementById("name").value.trim();
+    const codeValue = document.getElementById("code").value.trim();
 
-    const name = nameInput.value.trim();
-    const code = codeInput.value.trim();
-
-    if (!name || !code) {
+    if (!nameValue || !codeValue) {
       alert("Remplis tous les champs !");
       return;
     }
 
     await addDoc(collection(db, "test"), {
-      name: name,
-      code: code
+      name: nameValue,
+      code: codeValue
     });
 
-    alert("✅ Ajout réussi !");
+    alert("Ajout réussi !");
   } catch (e) {
-    alert("❌ Erreur : " + e.message);
-    console.log(e);
+    alert("Erreur ajout : " + e.message);
+  }
+};
+
+//
+// 🔍 SEARCH
+//
+window.searchData = async () => {
+  try {
+    const searchValue = document.getElementById("search").value.trim();
+
+    if (!searchValue) {
+      alert("Entre un nom !");
+      return;
+    }
+
+    const q = query(
+      collection(db, "test"),
+      where("name", "==", searchValue)
+    );
+
+    const snap = await getDocs(q);
+
+    if (snap.empty) {
+      document.getElementById("result").innerText = "Aucun résultat";
+      return;
+    }
+
+    let resultText = "";
+
+    snap.forEach(doc => {
+      resultText += "Code : " + doc.data().code + "\n";
+    });
+
+    document.getElementById("result").innerText = resultText;
+
+  } catch (e) {
+    alert("Erreur recherche : " + e.message);
   }
 };
 
