@@ -24,8 +24,8 @@
   <button onclick="signup()">Créer compte</button>
   <button onclick="login()">Connexion</button>
 
-  <!-- 📅 UPDATE INFO -->
-  <p id="updateInfo"></p>
+  <!-- 📅 VERSION FIXE -->
+  <p>📅 Dernière mise à jour : 15/04/2026 à 14:30</p>
 </div>
 
 <!-- 📦 APP -->
@@ -92,15 +92,6 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-//
-// 📅 UPDATE DATE (LOGIN PAGE)
-//
-document.getElementById("updateInfo").innerText =
-  "📅 Mise à jour : " + new Date().toLocaleDateString("fr-FR");
-
-//
-// 🔄 SWITCH UI
-//
 const loginBox = document.getElementById("loginBox");
 const appBox = document.getElementById("app");
 
@@ -118,24 +109,14 @@ onAuthStateChanged(auth, (user) => {
 // 🔐 SIGNUP
 //
 window.signup = async () => {
-  try {
-    await createUserWithEmailAndPassword(auth, email.value, password.value);
-    alert("Compte créé !");
-  } catch (e) {
-    alert(e.message);
-  }
+  await createUserWithEmailAndPassword(auth, email.value, password.value);
 };
 
 //
 // 🔑 LOGIN
 //
 window.login = async () => {
-  try {
-    await signInWithEmailAndPassword(auth, email.value, password.value);
-    alert("Connecté !");
-  } catch (e) {
-    alert(e.message);
-  }
+  await signInWithEmailAndPassword(auth, email.value, password.value);
 };
 
 //
@@ -149,56 +130,40 @@ window.logout = async () => {
 // ➕ ADD
 //
 window.addData = async () => {
-  try {
-    const user = auth.currentUser;
+  const user = auth.currentUser;
 
-    const nameValue = document.getElementById("name").value.trim();
-    const codeValue = document.getElementById("code").value.trim();
+  const nameValue = name.value.trim();
+  const codeValue = code.value.trim();
 
-    if (!nameValue || !codeValue) {
-      alert("Remplis tous les champs !");
-      return;
-    }
+  await addDoc(collection(db, "users", user.uid, "index"), {
+    name: nameValue,
+    code: codeValue
+  });
 
-    await addDoc(collection(db, "users", user.uid, "index"), {
-      name: nameValue,
-      code: codeValue
-    });
-
-    alert("Ajout réussi !");
-    loadAll();
-
-  } catch (e) {
-    alert(e.message);
-  }
+  loadAll();
 };
 
 //
 // 🔍 SEARCH
 //
 window.searchData = async () => {
-  try {
-    const user = auth.currentUser;
-    const searchValue = document.getElementById("search").value.trim();
+  const user = auth.currentUser;
+  const searchValue = search.value.trim();
 
-    const q = query(
-      collection(db, "users", user.uid, "index"),
-      where("name", "==", searchValue)
-    );
+  const q = query(
+    collection(db, "users", user.uid, "index"),
+    where("name", "==", searchValue)
+  );
 
-    const snap = await getDocs(q);
+  const snap = await getDocs(q);
 
-    let text = "";
+  let text = "";
 
-    snap.forEach(doc => {
-      text += doc.data().code + "\n";
-    });
+  snap.forEach(d => {
+    text += d.data().code + "\n";
+  });
 
-    document.getElementById("result").innerText = text || "Aucun résultat";
-
-  } catch (e) {
-    alert(e.message);
-  }
+  result.innerText = text || "Aucun résultat";
 };
 
 //
