@@ -7,7 +7,7 @@
     body { font-family: Arial; max-width: 600px; margin:auto; }
     .box { border:1px solid #ccc; padding:12px; margin:10px 0; }
     #app { display:none; }
-    button { margin-top:5px; }
+    .item { display:flex; align-items:center; gap:10px; margin:5px 0; }
   </style>
 </head>
 <body>
@@ -44,8 +44,9 @@
 
   <div class="box">
     <h2>📋 Mes index</h2>
-    <button onclick="loadAll()">Afficher tout</button>
-    <p id="list"></p>
+    <button onclick="loadAll()">Actualiser</button>
+    <button onclick="deleteSelected()">🗑 Supprimer sélection</button>
+    <div id="list"></div>
   </div>
 
 </div>
@@ -54,21 +55,23 @@
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
 
-import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
+import {
+  getAuth,
+  createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  getDocs 
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+  doc
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -84,7 +87,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🔄 UI SWITCH
+// 🔄 SWITCH UI
 const loginBox = document.getElementById("loginBox");
 const appBox = document.getElementById("app");
 
@@ -130,12 +133,11 @@ window.logout = async () => {
 };
 
 //
-// ➕ ADD (PAR UTILISATEUR)
+// ➕ ADD
 //
 window.addData = async () => {
   try {
     const user = auth.currentUser;
-    if (!user) return alert("Pas connecté");
 
     const nameValue = document.getElementById("name").value.trim();
     const codeValue = document.getElementById("code").value.trim();
@@ -151,6 +153,8 @@ window.addData = async () => {
     });
 
     alert("Ajout réussi !");
+    loadAll();
+
   } catch (e) {
     alert(e.message);
   }
@@ -171,17 +175,13 @@ window.searchData = async () => {
 
     const snap = await getDocs(q);
 
-    if (snap.empty) {
-      document.getElementById("result").innerText = "Aucun résultat";
-      return;
-    }
-
     let text = "";
+
     snap.forEach(doc => {
       text += doc.data().code + "\n";
     });
 
-    document.getElementById("result").innerText = text;
+    document.getElementById("result").innerText = text || "Aucun résultat";
 
   } catch (e) {
     alert(e.message);
@@ -192,23 +192,53 @@ window.searchData = async () => {
 // 📋 LOAD ALL
 //
 window.loadAll = async () => {
-  try {
-    const user = auth.currentUser;
+  const user = auth.currentUser;
 
-    const q = query(collection(db, "users", user.uid, "index"));
-    const snap = await getDocs(q);
+  const q = query(collection(db, "users", user.uid, "index"));
+  const snap = await getDocs(q);
 
-    let text = "";
+  let html = "";
 
-    snap.forEach(doc => {
-      const d = doc.data();
-      text += `${d.name} → ${d.code}\n`;
-    });
+  snap.forEach(d => {
+    const data = d.data();
 
-    document.getElementById("list").innerText = text || "vide";
-  } catch (e) {
-    alert(e.message);
+    html += `
+      <div class="item">
+        <input type="checkbox" value="${d.id}">
+        <span>${data.name} → ${data.code}</span>
+      </div>
+    `;
+  });
+
+  document.getElementById("list").innerHTML = html;
+};
+
+//
+// 🗑 DELETE WITH CONFIRMATION
+//
+window.deleteSelected = async () => {
+  const user = auth.currentUser;
+
+  const checkboxes = document.querySelectorAll("#list input[type='checkbox']:checked");
+
+  if (checkboxes.length === 0) {
+    alert("Aucun élément sélectionné");
+    return;
   }
+
+  const confirmText = prompt('Tape "confirmer" pour valider la suppression :');
+
+  if (confirmText !== "confirmer") {
+    alert("Suppression annulée");
+    return;
+  }
+
+  for (let cb of checkboxes) {
+    await deleteDoc(doc(db, "users", user.uid, "index", cb.value));
+  }
+
+  alert("Suppression effectuée !");
+  loadAll();
 };
 
 </script>
