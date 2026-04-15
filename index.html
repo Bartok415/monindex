@@ -4,16 +4,17 @@
   <meta charset="UTF-8">
   <title>Mon Index</title>
   <style>
-    body { font-family: Arial; max-width: 500px; margin:auto; }
-    .box { border:1px solid #ccc; padding:10px; margin:10px 0; }
+    body { font-family: Arial; max-width: 600px; margin:auto; }
+    .box { border:1px solid #ccc; padding:12px; margin:10px 0; }
     #app { display:none; }
+    button { margin-top:5px; }
   </style>
 </head>
 <body>
 
 <h1>📦 Mon Index</h1>
 
-<!-- 🔐 LOGIN ONLY -->
+<!-- 🔐 LOGIN -->
 <div id="loginBox" class="box">
   <h2>Connexion</h2>
   <input id="email" placeholder="Email"><br><br>
@@ -22,8 +23,10 @@
   <button onclick="login()">Connexion</button>
 </div>
 
-<!-- 📦 APP (hidden until login) -->
+<!-- 📦 APP -->
 <div id="app">
+
+  <button onclick="logout()">🚪 Déconnexion</button>
 
   <div class="box">
     <h2>➕ Ajouter index</h2>
@@ -39,16 +42,34 @@
     <p id="result"></p>
   </div>
 
+  <div class="box">
+    <h2>📋 Mes index</h2>
+    <button onclick="loadAll()">Afficher tout</button>
+    <p id="list"></p>
+  </div>
+
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } 
-from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
-import { getFirestore, collection, addDoc, query, where, getDocs } 
-from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { 
+  getAuth, 
+  createUserWithEmailAndPassword, 
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+
+import { 
+  getFirestore, 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  getDocs 
+} from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCjof3pUtMA9FdipAhENV8kMO_5_BVA8wQ",
@@ -63,7 +84,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🔄 SWITCH UI LOGIN / APP
+// 🔄 UI SWITCH
 const loginBox = document.getElementById("loginBox");
 const appBox = document.getElementById("app");
 
@@ -102,10 +123,20 @@ window.login = async () => {
 };
 
 //
-// ➕ ADD
+// 🚪 LOGOUT
+//
+window.logout = async () => {
+  await signOut(auth);
+};
+
+//
+// ➕ ADD (PAR UTILISATEUR)
 //
 window.addData = async () => {
   try {
+    const user = auth.currentUser;
+    if (!user) return alert("Pas connecté");
+
     const nameValue = document.getElementById("name").value.trim();
     const codeValue = document.getElementById("code").value.trim();
 
@@ -114,7 +145,7 @@ window.addData = async () => {
       return;
     }
 
-    await addDoc(collection(db, "test"), {
+    await addDoc(collection(db, "users", user.uid, "index"), {
       name: nameValue,
       code: codeValue
     });
@@ -130,10 +161,11 @@ window.addData = async () => {
 //
 window.searchData = async () => {
   try {
+    const user = auth.currentUser;
     const searchValue = document.getElementById("search").value.trim();
 
     const q = query(
-      collection(db, "test"),
+      collection(db, "users", user.uid, "index"),
       where("name", "==", searchValue)
     );
 
@@ -151,6 +183,29 @@ window.searchData = async () => {
 
     document.getElementById("result").innerText = text;
 
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+//
+// 📋 LOAD ALL
+//
+window.loadAll = async () => {
+  try {
+    const user = auth.currentUser;
+
+    const q = query(collection(db, "users", user.uid, "index"));
+    const snap = await getDocs(q);
+
+    let text = "";
+
+    snap.forEach(doc => {
+      const d = doc.data();
+      text += `${d.name} → ${d.code}\n`;
+    });
+
+    document.getElementById("list").innerText = text || "vide";
   } catch (e) {
     alert(e.message);
   }
