@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Mon Index</title>
+</head>
+<body>
+
+<h1>Mon Index</h1>
+
+<!-- LOGIN -->
+<h2>Connexion</h2>
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Mot de passe">
+<button onclick="login()">Connexion</button>
+<button onclick="signup()">Créer un compte</button>
+
+<hr>
+
+<!-- AJOUT -->
+<h2>Ajouter un index</h2>
+<input id="name" placeholder="Nom">
+<input id="code" placeholder="Suite de chiffres">
+<button onclick="addData()">Ajouter</button>
+
+<hr>
+
+<!-- RECHERCHE -->
+<h2>Recherche</h2>
+<input id="search" placeholder="Nom">
+<button onclick="searchData()">Rechercher</button>
+
+<p id="result"></p>
+
+<!-- FIREBASE -->
+<script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+
+// 🔥 TA CONFIG FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyCjof3pUtMA9FdipAhENV8kMO_5_BVA8wQ",
+  authDomain: "mon-index-app.firebaseapp.com",
+  projectId: "mon-index-app",
+  storageBucket: "mon-index-app.firebasestorage.app",
+  messagingSenderId: "936532214351",
+  appId: "1:936532214351:web:8461a9be4cbb59c59fa03a"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+// 🔐 CREATE ACCOUNT
+window.signup = async () => {
+  try {
+    await createUserWithEmailAndPassword(auth, email.value, password.value);
+    alert("Compte créé !");
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+// 🔑 LOGIN
+window.login = async () => {
+  try {
+    await signInWithEmailAndPassword(auth, email.value, password.value);
+    alert("Connecté !");
+  } catch (e) {
+    alert(e.message);
+  }
+};
+
+// ➕ ADD DATA
+window.addData = async () => {
+  const user = auth.currentUser;
+  if (!user) return alert("Connecte-toi d'abord");
+
+  await addDoc(collection(db, "users", user.uid, "index"), {
+    name: name.value,
+    code: code.value
+  });
+
+  alert("Ajouté !");
+};
+
+// 🔍 SEARCH
+window.searchData = async () => {
+  const user = auth.currentUser;
+  if (!user) return alert("Connecte-toi d'abord");
+
+  const q = query(
+    collection(db, "users", user.uid, "index"),
+    where("name", "==", search.value)
+  );
+
+  const snap = await getDocs(q);
+
+  if (snap.empty) {
+    result.innerText = "Aucun résultat";
+  } else {
+    snap.forEach(doc => {
+      result.innerText = doc.data().code;
+    });
+  }
+};
+
+</script>
+
+</body>
+</html>
