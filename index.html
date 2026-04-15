@@ -24,8 +24,8 @@
   <button onclick="signup()">Créer compte</button>
   <button onclick="login()">Connexion</button>
 
-  <!-- 📅 VERSION FIXE -->
-  <p>📅 Dernière mise à jour : 15/04/2026 à 14:30</p>
+  <!-- 📅 DERNIÈRE MISE À JOUR (LOCAL JS) -->
+  <p id="updateInfo"></p>
 </div>
 
 <!-- 📦 APP -->
@@ -92,6 +92,9 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+//
+// 🔄 UI SWITCH
+//
 const loginBox = document.getElementById("loginBox");
 const appBox = document.getElementById("app");
 
@@ -104,6 +107,23 @@ onAuthStateChanged(auth, (user) => {
     appBox.style.display = "none";
   }
 });
+
+//
+// 📅 DERNIÈRE MISE À JOUR (SANS FIREBASE)
+//
+function showLastUpdate() {
+  const now = new Date();
+
+  const formatted =
+    now.toLocaleDateString("fr-FR") +
+    " à " +
+    now.toLocaleTimeString("fr-FR");
+
+  document.getElementById("updateInfo").innerText =
+    "📅 Dernière mise à jour : " + formatted;
+}
+
+showLastUpdate();
 
 //
 // 🔐 SIGNUP
