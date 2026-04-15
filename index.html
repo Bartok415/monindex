@@ -24,7 +24,6 @@
   <button onclick="signup()">Créer compte</button>
   <button onclick="login()">Connexion</button>
 
-  <!-- 📅 DERNIÈRE MISE À JOUR (LOCAL JS) -->
   <p id="updateInfo"></p>
 </div>
 
@@ -93,7 +92,22 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 //
-// 🔄 UI SWITCH
+// 📅 VERSION LOCAL (pas Firebase)
+//
+function showUpdate() {
+  const now = new Date();
+
+  document.getElementById("updateInfo").innerText =
+    "📅 Dernière mise à jour : " +
+    now.toLocaleDateString("fr-FR") +
+    " " +
+    now.toLocaleTimeString("fr-FR");
+}
+
+showUpdate();
+
+//
+// 🔄 UI
 //
 const loginBox = document.getElementById("loginBox");
 const appBox = document.getElementById("app");
@@ -109,34 +123,25 @@ onAuthStateChanged(auth, (user) => {
 });
 
 //
-// 📅 DERNIÈRE MISE À JOUR (SANS FIREBASE)
-//
-function showLastUpdate() {
-  const now = new Date();
-
-  const formatted =
-    now.toLocaleDateString("fr-FR") +
-    " à " +
-    now.toLocaleTimeString("fr-FR");
-
-  document.getElementById("updateInfo").innerText =
-    "📅 Dernière mise à jour : " + formatted;
-}
-
-showLastUpdate();
-
-//
 // 🔐 SIGNUP
 //
 window.signup = async () => {
-  await createUserWithEmailAndPassword(auth, email.value, password.value);
+  try {
+    await createUserWithEmailAndPassword(auth, email.value, password.value);
+  } catch (e) {
+    alert(e.message);
+  }
 };
 
 //
 // 🔑 LOGIN
 //
 window.login = async () => {
-  await signInWithEmailAndPassword(auth, email.value, password.value);
+  try {
+    await signInWithEmailAndPassword(auth, email.value, password.value);
+  } catch (e) {
+    alert(e.message);
+  }
 };
 
 //
@@ -147,20 +152,37 @@ window.logout = async () => {
 };
 
 //
-// ➕ ADD
+// ➕ ADD (FIXÉ)
 //
 window.addData = async () => {
-  const user = auth.currentUser;
+  try {
+    const user = auth.currentUser;
 
-  const nameValue = name.value.trim();
-  const codeValue = code.value.trim();
+    if (!user) {
+      alert("Pas connecté");
+      return;
+    }
 
-  await addDoc(collection(db, "users", user.uid, "index"), {
-    name: nameValue,
-    code: codeValue
-  });
+    const nameValue = document.getElementById("name").value.trim();
+    const codeValue = document.getElementById("code").value.trim();
 
-  loadAll();
+    if (!nameValue || !codeValue) {
+      alert("Remplis tous les champs !");
+      return;
+    }
+
+    await addDoc(collection(db, "users", user.uid, "index"), {
+      name: nameValue,
+      code: codeValue
+    });
+
+    alert("Ajout réussi !");
+    loadAll();
+
+  } catch (e) {
+    console.error(e);
+    alert("Erreur ajout : " + e.message);
+  }
 };
 
 //
@@ -212,7 +234,7 @@ window.loadAll = async () => {
 };
 
 //
-// 🗑 DELETE WITH CONFIRMATION
+// 🗑 DELETE
 //
 window.deleteSelected = async () => {
   const user = auth.currentUser;
