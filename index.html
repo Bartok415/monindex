@@ -3,51 +3,41 @@
 <head>
   <meta charset="UTF-8">
   <title>Mon Index</title>
-  <style>
-    #app { display:none; }
-    body { font-family: Arial; max-width: 500px; margin:auto; }
-    .box { border:1px solid #ccc; padding:10px; margin:10px 0; }
-  </style>
 </head>
 <body>
 
-<h1>📦 Mon Index</h1>
+<h1>Mon Index (TEST FIRESTORE)</h1>
 
 <!-- LOGIN -->
-<div id="loginBox" class="box">
-  <h2>🔐 Connexion</h2>
-  <input id="email" placeholder="Email"><br><br>
-  <input id="password" type="password" placeholder="Mot de passe"><br><br>
+<div>
+  <h2>Connexion</h2>
+  <input id="email" placeholder="email">
+  <input id="password" type="password" placeholder="mot de passe">
   <button onclick="signup()">Créer compte</button>
   <button onclick="login()">Connexion</button>
 </div>
 
-<!-- APP -->
-<div id="app">
+<hr>
 
-  <div class="box">
-    <h2>➕ Ajouter index</h2>
-    <input id="name" placeholder="Nom"><br><br>
-    <input id="code" placeholder="Suite de chiffres"><br><br>
-    <button onclick="addData()">Ajouter</button>
-  </div>
-
-  <div class="box">
-    <h2>🔍 Recherche</h2>
-    <input id="search" placeholder="Nom"><br><br>
-    <button onclick="searchData()">Rechercher</button>
-    <p id="result"></p>
-  </div>
-
+<!-- AJOUT TEST -->
+<div>
+  <h2>Ajouter (TEST)</h2>
+  <input id="name" placeholder="nom">
+  <input id="code" placeholder="code">
+  <button onclick="addData()">Ajouter</button>
 </div>
+
+<hr>
+
+<p id="result"></p>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } 
 from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
-import { getFirestore, collection, addDoc, query, where, getDocs } 
+import { getFirestore, collection, addDoc } 
 from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -63,56 +53,41 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🔥 SWITCH LOGIN / APP
-onAuthStateChanged(auth, (user) => {
-  if (user) {
-    loginBox.style.display = "none";
-    appDiv.style.display = "block";
-  } else {
-    loginBox.style.display = "block";
-    appDiv.style.display = "none";
-  }
-});
-
-const loginBox = document.getElementById("loginBox");
-const appDiv = document.getElementById("app");
-
 // 🔐 SIGNUP
 window.signup = async () => {
-  await createUserWithEmailAndPassword(auth, email.value, password.value);
+  try {
+    await createUserWithEmailAndPassword(auth, email.value, password.value);
+    alert("compte créé");
+  } catch (e) {
+    alert(e.message);
+  }
 };
 
 // 🔑 LOGIN
 window.login = async () => {
-  await signInWithEmailAndPassword(auth, email.value, password.value);
+  try {
+    await signInWithEmailAndPassword(auth, email.value, password.value);
+    alert("connecté");
+  } catch (e) {
+    alert(e.message);
+  }
 };
 
-// ➕ ADD
+// ➕ TEST ADD (SANS USER POUR DEBUG)
 window.addData = async () => {
-  const user = auth.currentUser;
-  if (!user) return;
+  try {
+    console.log("user:", auth.currentUser);
 
-  await addDoc(collection(db, "users", user.uid, "index"), {
-    name: name.value,
-    code: code.value
-  });
+    await addDoc(collection(db, "test"), {
+      name: name.value,
+      code: code.value
+    });
 
-  alert("Ajouté !");
-};
-
-// 🔍 SEARCH
-window.searchData = async () => {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const q = query(
-    collection(db, "users", user.uid, "index"),
-    where("name", "==", search.value)
-  );
-
-  const snap = await getDocs(q);
-
-  result.innerText = snap.empty ? "Rien trouvé" : snap.docs[0].data().code;
+    alert("AJOUT FIRESTORE OK");
+  } catch (e) {
+    alert("ERREUR: " + e.message);
+    console.log(e);
+  }
 };
 
 </script>
