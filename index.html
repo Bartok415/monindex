@@ -17,10 +17,15 @@
 <!-- 🔐 LOGIN -->
 <div id="loginBox" class="box">
   <h2>Connexion</h2>
+
   <input id="email" placeholder="Email"><br><br>
   <input id="password" type="password" placeholder="Mot de passe"><br><br>
+
   <button onclick="signup()">Créer compte</button>
   <button onclick="login()">Connexion</button>
+
+  <!-- 📅 UPDATE INFO -->
+  <p id="updateInfo"></p>
 </div>
 
 <!-- 📦 APP -->
@@ -87,7 +92,15 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+//
+// 📅 UPDATE DATE (LOGIN PAGE)
+//
+document.getElementById("updateInfo").innerText =
+  "📅 Mise à jour : " + new Date().toLocaleDateString("fr-FR");
+
+//
 // 🔄 SWITCH UI
+//
 const loginBox = document.getElementById("loginBox");
 const appBox = document.getElementById("app");
 
