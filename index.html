@@ -40,16 +40,27 @@
   </div>
 
   <div class="box">
-    <h2>🔍 Recherche</h2>
-    <input id="search" placeholder="Nom"><br><br>
+    <h2>🔍 Recherche intelligente</h2>
+    <input id="search" placeholder="Tape un mot..."><br><br>
     <button onclick="searchData()">Rechercher</button>
     <p id="result"></p>
   </div>
 
   <div class="box">
     <h2>📋 Mes index</h2>
+
+    <p id="counter">0 index enregistrés</p>
+
+    <select id="sortMode" onchange="loadAll()">
+      <option value="name">Trier par nom</option>
+      <option value="newest">Dernier ajouté</option>
+    </select>
+
+    <br><br>
+
     <button onclick="loadAll()">Actualiser</button>
     <button onclick="deleteSelected()">🗑 Supprimer sélection</button>
+
     <div id="list"></div>
   </div>
 
@@ -75,7 +86,8 @@ import {
   where,
   getDocs,
   deleteDoc,
-  doc
+  doc,
+  orderBy
 } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -92,7 +104,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 //
-// 📅 VERSION LOCAL (pas Firebase)
+// 📅 VERSION LOCAL
 //
 function showUpdate() {
   const now = new Date();
@@ -116,6 +128,7 @@ onAuthStateChanged(auth, (user) => {
   if (user) {
     loginBox.style.display = "none";
     appBox.style.display = "block";
+    loadAll();
   } else {
     loginBox.style.display = "block";
     appBox.style.display = "none";
@@ -152,75 +165,97 @@ window.logout = async () => {
 };
 
 //
-// ➕ ADD (FIXÉ)
+// ➕ ADD
 //
 window.addData = async () => {
   try {
     const user = auth.currentUser;
 
-    if (!user) {
-      alert("Pas connecté");
-      return;
-    }
-
     const nameValue = document.getElementById("name").value.trim();
     const codeValue = document.getElementById("code").value.trim();
 
     if (!nameValue || !codeValue) {
-      alert("Remplis tous les champs !");
+      alert("Champs vides");
       return;
     }
 
     await addDoc(collection(db, "users", user.uid, "index"), {
       name: nameValue,
-      code: codeValue
+      code: codeValue,
+      createdAt: Date.now()
     });
 
-    alert("Ajout réussi !");
     loadAll();
 
   } catch (e) {
-    console.error(e);
-    alert("Erreur ajout : " + e.message);
+    alert(e.message);
   }
 };
 
 //
-// 🔍 SEARCH
+// 🔍 SMART SEARCH
 //
 window.searchData = async () => {
   const user = auth.currentUser;
-  const searchValue = search.value.trim();
 
-  const q = query(
-    collection(db, "users", user.uid, "index"),
-    where("name", "==", searchValue)
-  );
+  const searchValue = document.getElementById("search").value
+    .trim()
+    .toLowerCase();
 
-  const snap = await getDocs(q);
-
-  let text = "";
-
-  snap.forEach(d => {
-    text += d.data().code + "\n";
-  });
-
-  result.innerText = text || "Aucun résultat";
-};
-
-//
-// 📋 LOAD ALL
-//
-window.loadAll = async () => {
-  const user = auth.currentUser;
+  if (!searchValue) {
+    document.getElementById("result").innerText = "Tape un mot";
+    return;
+  }
 
   const q = query(collection(db, "users", user.uid, "index"));
   const snap = await getDocs(q);
 
-  let html = "";
+  let results = [];
 
   snap.forEach(d => {
     const data = d.data();
+
+    const name = (data.name || "").toLowerCase();
+    const code = (data.code || "").toLowerCase();
+
+    if (name.includes(searchValue) || code.includes(searchValue)) {
+      results.push(data.code);
+    }
+  });
+
+  document.getElementById("result").innerText =
+    results.length ? results.join("\n") : "Aucun résultat";
+};
+
+//
+// 📋 LOAD ALL + SORT + COUNTER
+//
+window.loadAll = async () => {
+  const user = auth.currentUser;
+  const mode = document.getElementById("sortMode").value;
+
+  let q;
+
+  if (mode === "name") {
+    q = query(
+      collection(db, "users", user.uid, "index"),
+      orderBy("name")
+    );
+  } else {
+    q = query(
+      collection(db, "users", user.uid, "index"),
+      orderBy("createdAt", "desc")
+    );
+  }
+
+  const snap = await getDocs(q);
+
+  let html = "";
+  let count = 0;
+
+  snap.forEach(d => {
+    const data = d.data();
+    count++;
 
     html += `
       <div class="item">
@@ -231,6 +266,9 @@ window.loadAll = async () => {
   });
 
   document.getElementById("list").innerHTML = html;
+
+  document.getElementById("counter").innerText =
+    count + " index enregistrés";
 };
 
 //
@@ -239,17 +277,17 @@ window.loadAll = async () => {
 window.deleteSelected = async () => {
   const user = auth.currentUser;
 
-  const checkboxes = document.querySelectorAll("#list input[type='checkbox']:checked");
+  const checkboxes = document.querySelectorAll("#list input:checked");
 
   if (checkboxes.length === 0) {
     alert("Aucun élément sélectionné");
     return;
   }
 
-  const confirmText = prompt('Tape "confirmer" pour valider la suppression :');
+  const confirmText = prompt('Tape "confirmer" pour supprimer');
 
   if (confirmText !== "confirmer") {
-    alert("Suppression annulée");
+    alert("Annulé");
     return;
   }
 
@@ -257,7 +295,6 @@ window.deleteSelected = async () => {
     await deleteDoc(doc(db, "users", user.uid, "index", cb.value));
   }
 
-  alert("Suppression effectuée !");
   loadAll();
 };
 
