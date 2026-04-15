@@ -24,7 +24,6 @@
   <button onclick="signup()">Créer compte</button>
   <button onclick="login()">Connexion</button>
 
-  <!-- 📅 DERNIÈRE MODIFICATION HTML -->
   <p id="updateInfo"></p>
 </div>
 
@@ -104,7 +103,7 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 //
-// 📅 DERNIÈRE MODIFICATION HTML (IMPORTANT)
+// 📅 DERNIÈRE MODIFICATION HTML
 //
 function showUpdate() {
   const last = document.lastModified;
@@ -204,7 +203,7 @@ window.addData = async () => {
 };
 
 //
-// 🔍 SEARCH INTELLIGENT
+// 🔍 SMART SEARCH (AMÉLIORÉ)
 //
 window.searchData = async () => {
   const user = auth.currentUser;
@@ -216,7 +215,7 @@ window.searchData = async () => {
   const q = query(collection(db, "users", user.uid, "index"));
   const snap = await getDocs(q);
 
-  let results = [];
+  let resultsHtml = "";
 
   snap.forEach(d => {
     const data = d.data();
@@ -225,12 +224,16 @@ window.searchData = async () => {
     const code = (data.code || "").toLowerCase();
 
     if (name.includes(searchValue) || code.includes(searchValue)) {
-      results.push(data.code);
+      resultsHtml += `
+        <div>
+          📌 <b>${data.name}</b> → ${data.code}
+        </div>
+      `;
     }
   });
 
-  document.getElementById("result").innerText =
-    results.length ? results.join("\n") : "Aucun résultat";
+  document.getElementById("result").innerHTML =
+    resultsHtml || "Aucun résultat";
 };
 
 //
