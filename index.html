@@ -24,6 +24,7 @@
   <button onclick="signup()">Créer compte</button>
   <button onclick="login()">Connexion</button>
 
+  <!-- 📅 DERNIÈRE MODIFICATION HTML -->
   <p id="updateInfo"></p>
 </div>
 
@@ -83,7 +84,6 @@ import {
   collection,
   addDoc,
   query,
-  where,
   getDocs,
   deleteDoc,
   doc,
@@ -104,16 +104,13 @@ const auth = getAuth(app);
 const db = getFirestore(app);
 
 //
-// 📅 VERSION LOCAL
+// 📅 DERNIÈRE MODIFICATION HTML (IMPORTANT)
 //
 function showUpdate() {
-  const now = new Date();
+  const last = document.lastModified;
 
   document.getElementById("updateInfo").innerText =
-    "📅 Dernière mise à jour : " +
-    now.toLocaleDateString("fr-FR") +
-    " " +
-    now.toLocaleTimeString("fr-FR");
+    "📅 Dernière modification du code : " + last;
 }
 
 showUpdate();
@@ -179,16 +176,13 @@ window.addData = async () => {
       return;
     }
 
-    // 🔍 check doublon
     const q = query(collection(db, "users", user.uid, "index"));
     const snap = await getDocs(q);
 
     let exists = false;
 
     snap.forEach(d => {
-      if (d.data().code === codeValue) {
-        exists = true;
-      }
+      if (d.data().code === codeValue) exists = true;
     });
 
     if (exists) {
@@ -202,7 +196,6 @@ window.addData = async () => {
       createdAt: Date.now()
     });
 
-    alert("Ajout réussi !");
     loadAll();
 
   } catch (e) {
@@ -211,7 +204,7 @@ window.addData = async () => {
 };
 
 //
-// 🔍 SMART SEARCH
+// 🔍 SEARCH INTELLIGENT
 //
 window.searchData = async () => {
   const user = auth.currentUser;
@@ -219,11 +212,6 @@ window.searchData = async () => {
   const searchValue = document.getElementById("search").value
     .trim()
     .toLowerCase();
-
-  if (!searchValue) {
-    document.getElementById("result").innerText = "Tape un mot";
-    return;
-  }
 
   const q = query(collection(db, "users", user.uid, "index"));
   const snap = await getDocs(q);
@@ -246,7 +234,7 @@ window.searchData = async () => {
 };
 
 //
-// 📋 LOAD ALL + SORT + COUNT
+// 📋 LOAD + TRI + COMPTEUR
 //
 window.loadAll = async () => {
   const user = auth.currentUser;
