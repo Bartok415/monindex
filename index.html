@@ -3,13 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <title>Mon Index</title>
+  <style>
+    #app { display:none; }
+    body { font-family: Arial; max-width: 500px; margin:auto; }
+    .box { border:1px solid #ccc; padding:10px; margin:10px 0; }
+  </style>
 </head>
-<body style="font-family: Arial; max-width: 500px; margin: auto;">
+<body>
 
 <h1>📦 Mon Index</h1>
 
 <!-- LOGIN -->
-<div style="border:1px solid #ccc; padding:10px; margin-bottom:20px;">
+<div id="loginBox" class="box">
   <h2>🔐 Connexion</h2>
   <input id="email" placeholder="Email"><br><br>
   <input id="password" type="password" placeholder="Mot de passe"><br><br>
@@ -17,27 +22,33 @@
   <button onclick="login()">Connexion</button>
 </div>
 
-<!-- AJOUT -->
-<div style="border:1px solid #ccc; padding:10px; margin-bottom:20px;">
-  <h2>➕ Ajouter un index</h2>
-  <input id="name" placeholder="Nom"><br><br>
-  <input id="code" placeholder="Suite de chiffres"><br><br>
-  <button onclick="addData()">Ajouter</button>
-</div>
+<!-- APP -->
+<div id="app">
 
-<!-- RECHERCHE -->
-<div style="border:1px solid #ccc; padding:10px;">
-  <h2>🔍 Recherche</h2>
-  <input id="search" placeholder="Nom"><br><br>
-  <button onclick="searchData()">Rechercher</button>
-  <p id="result"></p>
+  <div class="box">
+    <h2>➕ Ajouter index</h2>
+    <input id="name" placeholder="Nom"><br><br>
+    <input id="code" placeholder="Suite de chiffres"><br><br>
+    <button onclick="addData()">Ajouter</button>
+  </div>
+
+  <div class="box">
+    <h2>🔍 Recherche</h2>
+    <input id="search" placeholder="Nom"><br><br>
+    <button onclick="searchData()">Rechercher</button>
+    <p id="result"></p>
+  </div>
+
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } 
+from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
+
+import { getFirestore, collection, addDoc, query, where, getDocs } 
+from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCjof3pUtMA9FdipAhENV8kMO_5_BVA8wQ",
@@ -52,31 +63,47 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// 🔥 SWITCH LOGIN / APP
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    loginBox.style.display = "none";
+    appDiv.style.display = "block";
+  } else {
+    loginBox.style.display = "block";
+    appDiv.style.display = "none";
+  }
+});
+
+const loginBox = document.getElementById("loginBox");
+const appDiv = document.getElementById("app");
+
+// 🔐 SIGNUP
 window.signup = async () => {
   await createUserWithEmailAndPassword(auth, email.value, password.value);
-  alert("Compte créé");
 };
 
+// 🔑 LOGIN
 window.login = async () => {
   await signInWithEmailAndPassword(auth, email.value, password.value);
-  alert("Connecté");
 };
 
+// ➕ ADD
 window.addData = async () => {
   const user = auth.currentUser;
-  if (!user) return alert("Connecte-toi");
+  if (!user) return;
 
   await addDoc(collection(db, "users", user.uid, "index"), {
     name: name.value,
     code: code.value
   });
 
-  alert("Ajouté");
+  alert("Ajouté !");
 };
 
+// 🔍 SEARCH
 window.searchData = async () => {
   const user = auth.currentUser;
-  if (!user) return alert("Connecte-toi");
+  if (!user) return;
 
   const q = query(
     collection(db, "users", user.uid, "index"),
