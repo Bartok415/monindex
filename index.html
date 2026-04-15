@@ -6,59 +6,49 @@
   <style>
     body { font-family: Arial; max-width: 500px; margin:auto; }
     .box { border:1px solid #ccc; padding:10px; margin:10px 0; }
+    #app { display:none; }
   </style>
 </head>
 <body>
 
 <h1>📦 Mon Index</h1>
 
-<!-- LOGIN -->
-<div class="box">
-  <h2>🔐 Connexion</h2>
+<!-- 🔐 LOGIN ONLY -->
+<div id="loginBox" class="box">
+  <h2>Connexion</h2>
   <input id="email" placeholder="Email"><br><br>
   <input id="password" type="password" placeholder="Mot de passe"><br><br>
   <button onclick="signup()">Créer compte</button>
   <button onclick="login()">Connexion</button>
 </div>
 
-<hr>
+<!-- 📦 APP (hidden until login) -->
+<div id="app">
 
-<!-- AJOUT -->
-<div class="box">
-  <h2>➕ Ajouter index</h2>
-  <input id="name" placeholder="Nom"><br><br>
-  <input id="code" placeholder="Suite de chiffres"><br><br>
-  <button onclick="addData()">Ajouter</button>
-</div>
+  <div class="box">
+    <h2>➕ Ajouter index</h2>
+    <input id="name" placeholder="Nom"><br><br>
+    <input id="code" placeholder="Suite de chiffres"><br><br>
+    <button onclick="addData()">Ajouter</button>
+  </div>
 
-<hr>
+  <div class="box">
+    <h2>🔍 Recherche</h2>
+    <input id="search" placeholder="Nom"><br><br>
+    <button onclick="searchData()">Rechercher</button>
+    <p id="result"></p>
+  </div>
 
-<!-- RECHERCHE -->
-<div class="box">
-  <h2>🔍 Recherche</h2>
-  <input id="search" placeholder="Nom"><br><br>
-  <button onclick="searchData()">Rechercher</button>
-  <p id="result"></p>
 </div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged } 
+from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
 
-import { 
-  getAuth, 
-  createUserWithEmailAndPassword, 
-  signInWithEmailAndPassword 
-} from "https://www.gstatic.com/firebasejs/12.12.0/firebase-auth.js";
-
-import { 
-  getFirestore, 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  getDocs 
-} from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, where, getDocs } 
+from "https://www.gstatic.com/firebasejs/12.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCjof3pUtMA9FdipAhENV8kMO_5_BVA8wQ",
@@ -72,6 +62,20 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
+
+// 🔄 SWITCH UI LOGIN / APP
+const loginBox = document.getElementById("loginBox");
+const appBox = document.getElementById("app");
+
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    loginBox.style.display = "none";
+    appBox.style.display = "block";
+  } else {
+    loginBox.style.display = "block";
+    appBox.style.display = "none";
+  }
+});
 
 //
 // 🔐 SIGNUP
@@ -98,7 +102,7 @@ window.login = async () => {
 };
 
 //
-// ➕ ADD DATA
+// ➕ ADD
 //
 window.addData = async () => {
   try {
@@ -117,7 +121,7 @@ window.addData = async () => {
 
     alert("Ajout réussi !");
   } catch (e) {
-    alert("Erreur ajout : " + e.message);
+    alert(e.message);
   }
 };
 
@@ -127,11 +131,6 @@ window.addData = async () => {
 window.searchData = async () => {
   try {
     const searchValue = document.getElementById("search").value.trim();
-
-    if (!searchValue) {
-      alert("Entre un nom !");
-      return;
-    }
 
     const q = query(
       collection(db, "test"),
@@ -145,16 +144,15 @@ window.searchData = async () => {
       return;
     }
 
-    let resultText = "";
-
+    let text = "";
     snap.forEach(doc => {
-      resultText += "Code : " + doc.data().code + "\n";
+      text += doc.data().code + "\n";
     });
 
-    document.getElementById("result").innerText = resultText;
+    document.getElementById("result").innerText = text;
 
   } catch (e) {
-    alert("Erreur recherche : " + e.message);
+    alert(e.message);
   }
 };
 
