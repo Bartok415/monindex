@@ -3,27 +3,31 @@
 <head>
   <meta charset="UTF-8">
   <title>Mon Index</title>
+  <style>
+    body { font-family: Arial; max-width: 500px; margin:auto; }
+    .box { border:1px solid #ccc; padding:10px; margin:10px 0; }
+  </style>
 </head>
 <body>
 
-<h1>Mon Index (TEST FIRESTORE)</h1>
+<h1>📦 Mon Index</h1>
 
 <!-- LOGIN -->
-<div>
-  <h2>Connexion</h2>
-  <input id="email" placeholder="email">
-  <input id="password" type="password" placeholder="mot de passe">
+<div class="box">
+  <h2>🔐 Connexion</h2>
+  <input id="email" placeholder="Email"><br><br>
+  <input id="password" type="password" placeholder="Mot de passe"><br><br>
   <button onclick="signup()">Créer compte</button>
   <button onclick="login()">Connexion</button>
 </div>
 
 <hr>
 
-<!-- AJOUT TEST -->
-<div>
-  <h2>Ajouter (TEST)</h2>
-  <input id="name" placeholder="nom">
-  <input id="code" placeholder="code">
+<!-- AJOUT -->
+<div class="box">
+  <h2>➕ Ajouter index</h2>
+  <input id="name" placeholder="Nom"><br><br>
+  <input id="code" placeholder="Suite de chiffres"><br><br>
   <button onclick="addData()">Ajouter</button>
 </div>
 
@@ -53,11 +57,11 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🔐 SIGNUP
+// 🔐 CREATE ACCOUNT
 window.signup = async () => {
   try {
     await createUserWithEmailAndPassword(auth, email.value, password.value);
-    alert("compte créé");
+    alert("Compte créé !");
   } catch (e) {
     alert(e.message);
   }
@@ -67,25 +71,34 @@ window.signup = async () => {
 window.login = async () => {
   try {
     await signInWithEmailAndPassword(auth, email.value, password.value);
-    alert("connecté");
+    alert("Connecté !");
   } catch (e) {
     alert(e.message);
   }
 };
 
-// ➕ TEST ADD (SANS USER POUR DEBUG)
+// ➕ ADD DATA (FIX FINAL)
 window.addData = async () => {
   try {
-    console.log("user:", auth.currentUser);
+    const nameInput = document.getElementById("name");
+    const codeInput = document.getElementById("code");
+
+    const name = nameInput.value.trim();
+    const code = codeInput.value.trim();
+
+    if (!name || !code) {
+      alert("Remplis tous les champs !");
+      return;
+    }
 
     await addDoc(collection(db, "test"), {
-      name: name.value,
-      code: code.value
+      name: name,
+      code: code
     });
 
-    alert("AJOUT FIRESTORE OK");
+    alert("✅ Ajout réussi !");
   } catch (e) {
-    alert("ERREUR: " + e.message);
+    alert("❌ Erreur : " + e.message);
     console.log(e);
   }
 };
